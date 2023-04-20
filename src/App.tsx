@@ -1,4 +1,3 @@
-import './App.css';
 import AppWrapper from './AppWrapper';
 
 function App() {

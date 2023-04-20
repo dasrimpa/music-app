@@ -1,17 +1,21 @@
-import { routes } from "lib/routes";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+
 import { LoginInterface } from "Interface/Login.interface";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { fireAuth } from "lib/firebase";
 import ErrorMessage from "components/ErrorMessage";
 import { messages } from "lib/messages";
+import Button from "components/Button";
+import { routes } from "lib/routes";
+import Logo from '../../assets/images/Logo.svg';
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadingState, setLoadingState] = useState(false);
   const navigate = useNavigate();
   const loginSchema = yup.object().shape({
     email: yup
@@ -32,8 +36,14 @@ export default function LoginPage() {
 
   async function onSubmit(val: LoginInterface) {
     try {
-      await signInWithEmailAndPassword(fireAuth, val.email, val.password);
-      navigate(routes.songList);
+      await signInWithEmailAndPassword(fireAuth, val.email, val.password).then(
+        () => {
+          setLoadingState(true);
+          setTimeout(() => {
+            navigate(routes.dashboard.SongList.path);
+          }, 3000);
+        }
+      );
     } catch (error: any) {
       if (error.code === "auth/wrong-password") {
         setErrorMessage("Invalid password");
@@ -45,47 +55,86 @@ export default function LoginPage() {
     }
   }
   return (
-    <div className="w-[300px] mx-auto mt-10">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-6 mb-6 md:grid-cols-2"></div>
-        <div className="mb-6">
-          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-            Email address
-          </label>
-          <input
-            type="email"
-            {...register("email")}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="john.doe@company.com"
-          />
+    <section className="bg-gray-50">
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+        <div className="w-full bg-white rounded-lg shadow md:mt-0 sm:max-w-md xl:p-0">
+          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
+            <div className="sm:mx-auto sm:w-full sm:max-w-sm ">
+              <img
+                className="mx-auto h-10 w-auto"
+                src={Logo}
+                alt="Your Company"
+              />
+            </div>
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+              Sign in to your account
+            </h1>
+            <form
+              className="space-y-4 md:space-y-6"
+              onSubmit={handleSubmit(onSubmit)}
+            >
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-900 text-left">
+                  Email
+                </label>
+                <input
+                  {...register("email")}
+                  type="email"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="name@company.com"
+                />
+              </div>
+              {errors && (
+                <ErrorMessage className="text-left">
+                  {errors.email?.message}
+                </ErrorMessage>
+              )}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-left">
+                  Password
+                </label>
+                <input
+                  {...register("password")}
+                  type="password"
+                  placeholder="••••••••"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                />
+              </div>
+              {errors && (
+                <ErrorMessage className="text-left">
+                  {errors.password?.message}
+                </ErrorMessage>
+              )}
+              <div className="flex items-center justify-end">
+                <Link
+                  to={""}
+                  className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <Button
+                loading={loadingState}
+                disabled={loadingState}
+                type="submit"
+                className="w-full"
+              >
+                Sign in
+              </Button>
+              <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
+                Don’t have an account yet?{" "}
+                <Link
+                  to={routes.register}
+                  className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </form>
+            {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
+          </div>
         </div>
-        {errors && <ErrorMessage>{errors.email?.message}</ErrorMessage>}
-        <div className="mb-6">
-          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-            Password
-          </label>
-          <input
-            type="password"
-            {...register("password")}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="•••••••••"
-          />
-        </div>
-        {errors && <ErrorMessage>{errors.password?.message}</ErrorMessage>}
-        <button
-          type="submit"
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        >
-          Submit
-        </button>
-      </form>
-      <div className="pt-2">
-        Do not have an account?{" "}
-        <Link to={routes.register} className="text-blue-600">
-          register
-        </Link>
       </div>
-      {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-    </div>
+    </section>
   );
 }
